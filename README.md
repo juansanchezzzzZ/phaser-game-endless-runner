@@ -39,7 +39,6 @@ The main goal is to demonstrate the learning process, the ability to structure s
 - Node.js (for development)
 
 ## Installation
-
 ```bash
 git clone https://github.com/juansanchezzzzZ/phaser-game-endless-runner.git
 cd phaser-game
