@@ -38,13 +38,6 @@ The main goal is to demonstrate the learning process, the ability to structure s
 - HTML5 Canvas
 - Node.js (for development)
 
-## Installation
-```bash
-git clone https://github.com/juansanchezzzzZ/phaser-game-endless-runner.git
-cd phaser-game
-npm install
-npm run dev
-
 ## Features
 - Isometric movement
 - Procedural level generation
@@ -52,12 +45,18 @@ npm run dev
 - Increasing difficulty
 - Score system
 
-
 ## Contributing
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
 4. Open a Pull Request
+
+## Installation
+```bash
+git clone https://github.com/juansanchezzzzZ/phaser-game-endless-runner.git
+cd phaser-game
+npm install
+npm run dev
 
 ## Authors
 - Juan José Pineda Sánchez
