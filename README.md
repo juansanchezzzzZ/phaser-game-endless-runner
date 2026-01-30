@@ -37,7 +37,7 @@ The main goal is to demonstrate the learning process, the ability to structure s
 - JavaScript / TypeScript
 - HTML5 Canvas
 - Node.js (for development)
-- 
+
 ## Installation
 
 ```bash
