@@ -8,45 +8,43 @@ export default class CameraManager {
         
         this.isoRow = -5; 
         
-        // --- PROPIEDADES DE VELOCIDAD ---
-        this.speed = 0.01; 
-        this.maxSpeed = 0.03; // Tope máximo (ajústalo según pruebes)
-        this.difficultyIncrement = 0.0001; // Cuánto aumenta por cada punto
+        // --- VELOCIDAD CORREGIDA ---
+        // Valores mucho más pequeños para compensar el multiplicador delta
+        this.speed = 0.0002; 
+        this.maxSpeed = 0.001; 
+        this.difficultyIncrement = 0.000005; 
         
-        this.deadZone = 15; 
-        this.maxForwardAdvantage = 4; 
-        this.catchUpLerp = 0.08; 
+        this.deadZone = 12; 
+        this.maxForwardAdvantage = 3; 
+        this.catchUpLerp = 0.02; // Muy suave
 
-        this.heightLerpFactor = 0.1; 
+        this.heightLerpFactor = 0.05; 
         this.currentVisualY = 0;
     }
 
     update(delta, playerIsoY, playerVisualY) {
-        // 1. Avance automático constante
-        this.isoRow += this.speed * delta * 0.1;
+        // Avance automático corregido para delta de 60fps
+        this.isoRow += this.speed * delta;
 
-        // 2. LÓGICA DE ENGANCHE (Smooth Catch-up)
+        // Suavizado de persecución
         const threshold = this.isoRow + this.maxForwardAdvantage;
         if (playerIsoY > threshold) {
-            const diff = playerIsoY - threshold;
-            this.isoRow += diff * this.catchUpLerp;
+            this.isoRow += (playerIsoY - threshold) * this.catchUpLerp;
         }
 
-        // 3. Cálculo de coordenadas Isométricas
         const camX = (0 - this.isoRow) * (this.tileW / 2);
         const logicCamY = (0 + this.isoRow) * (this.tileH / 2);
 
-        // 4. Gestión del Relieve
         if (playerVisualY !== undefined) {
-            const verticalDiff = playerVisualY - logicCamY;
-            const targetCamY = logicCamY + (verticalDiff * 0.8); 
+            const targetCamY = logicCamY + ((playerVisualY - logicCamY) * 0.6); 
             if (this.currentVisualY === 0) this.currentVisualY = targetCamY;
             this.currentVisualY = Phaser.Math.Linear(this.currentVisualY, targetCamY, this.heightLerpFactor);
         } else {
             this.currentVisualY = logicCamY;
         }
 
-        this.scene.cameras.main.centerOn(camX, this.currentVisualY);
+        // Redondeo para evitar temblores
+        this.scene.cameras.main.centerOn(Math.round(camX), Math.round(this.currentVisualY));
     }
 
     checkGameOver(playerIsoY) {
@@ -54,13 +52,8 @@ export default class CameraManager {
     }
 
     increaseDifficulty() {
-        // Solo aumentamos si no hemos llegado al máximo permitido
         if (this.speed < this.maxSpeed) {
             this.speed += this.difficultyIncrement;
-            
-            // Opcional: Para que sea más pulido, a medida que te acercas 
-            // al máximo, el incremento podría ser más pequeño
-            // this.speed += (this.maxSpeed - this.speed) * 0.01;
         }
     }
 }

@@ -7,10 +7,16 @@ const TILE_CONFIG = { tileW: 100, tileH: 60 };
 
 const config = {
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    // 📱 Ajuste para Iframe y visibilidad
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 1024, // Aumentamos el ancho base para ver más carriles a los lados
+        height: 768  // Aumentamos el alto para ver más profundidad
+    },
     backgroundColor: '#87ceeb',
     pixelArt: true,
+    autoFocus: true,
     scene: { preload, create, update }
 };
 
@@ -61,33 +67,32 @@ function preload() {
 }
 
 function create() {
-    // 🌄 Fondo
+    // 🔗 Foco para Iframe
+    this.input.on('pointerdown', () => {
+        window.focus();
+    });
+
+    // 🎥 CÁMARA: Ajuste de Zoom (0.8 o 0.7 para ver más lejos)
+    this.cameras.main.setZoom(0.8);
+
+    // 🌄 Fondo (Escalado para que no se vean bordes con el nuevo zoom)
     const bg = this.add.image(
-        this.cameras.main.width / 2,
-        this.cameras.main.height / 2,
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
         'fondo'
     );
-
-    const scale = Math.max(
-        this.cameras.main.width / bg.width,
-        this.cameras.main.height / bg.height
-    );
-
-    bg.setScale(scale)
-      .setScrollFactor(0)
-      .setDepth(-2_000_000);
+    bg.setScale(2.5).setScrollFactor(0).setDepth(-2_000_000);
 
     const sky = this.add.rectangle(
-        this.cameras.main.width / 2,
-        this.cameras.main.height / 2,
-        this.cameras.main.width,
-        this.cameras.main.height,
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        2000,
+        2000,
         0x87ceeb
     );
-
     sky.setScrollFactor(0).setDepth(-1_500_000);
 
-    // 🎮 Estado
+    // 🎮 Estado Inicial
     this.input.keyboard.enabled = true;
     isGameOver = false;
     maxPlayerRow = 0;
@@ -95,7 +100,7 @@ function create() {
 
     cursors = this.input.keyboard.createCursorKeys();
 
-    // 🌍 Mundo
+    // 🌍 Sistemas
     mapManager = new MapManager(this, TILE_CONFIG);
     mapManager.init(25);
 
@@ -103,16 +108,15 @@ function create() {
 
     player = new Player(this, 0, 0, TILE_CONFIG, mapManager);
 
-    // 🧮 UI
-    scoreText = this.add.text(30, 30, '0 m', {
-        fontSize: '48px',
+    // 🧮 UI (Usamos valores fijos para que no se muevan con el zoom de la cámara)
+    scoreText = this.add.text(40, 40, '0 m', {
+        fontSize: '56px',
         color: '#ffffff',
         stroke: '#000000',
         strokeThickness: 10,
         fontStyle: 'bold',
         fontFamily: 'Arial Black, sans-serif'
     });
-
     scoreText.setScrollFactor(0).setDepth(2_000_000);
 }
 
@@ -138,7 +142,6 @@ function handlePlayerInput() {
 
 function queueInput(dir) {
     inputBuffer.keys.add(dir);
-
     if (inputBuffer.timer) return;
 
     inputBuffer.timer = this.time.delayedCall(30, () => {
@@ -176,10 +179,9 @@ function updateScore() {
 
         this.tweens.add({
             targets: scoreText,
-            scale: 1.2,
+            scale: 1.1,
             duration: 50,
-            yoyo: true,
-            ease: 'Quad.easeInOut'
+            yoyo: true
         });
 
         cameraManager.increaseDifficulty?.();
@@ -215,6 +217,15 @@ function gameOver(reason) {
 
     this.input.keyboard.enabled = false;
 
+    // 🚀 Comunicación con App de Ranking
+    if (window.parent) {
+        window.parent.postMessage({
+            type: 'GAME_OVER',
+            score: maxPlayerRow,
+            reason: reason
+        }, '*');
+    }
+
     if (reason === 'water') {
         this.tweens.add({
             targets: player,
@@ -225,19 +236,14 @@ function gameOver(reason) {
         });
     } else if (reason === 'camera') {
         player.setTint(0x222222);
-        this.tweens.add({
-            targets: player,
-            alpha: 0,
-            scale: 0.5,
-            duration: 400
-        });
+        this.tweens.add({ targets: player, alpha: 0, scale: 0.5, duration: 400 });
     } else {
         this.cameras.main.shake(250, 0.03);
         player.setTint(0xff0000);
         player.setAngle(90);
     }
 
-    this.time.delayedCall(1200, () => {
+    this.time.delayedCall(1500, () => {
         this.scene.restart();
     });
 }
